@@ -11,7 +11,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sona import ID,PW,token
+from sona import ID,PW
 import time
 import telegram
 import traceback
@@ -20,13 +20,14 @@ import signal
 import json
 import subprocess
 
-VERSION = 1.1
+VERSION = '1.1.1'
 NOTES = '''
-        skip duplicate data within a day
+        fixed error when there is no data
         '''
 
 interval = 2 #min
 
+token = 'xxxxx'
 
 chrome_dir = '/usr/local/bin/chromedriver'
 
@@ -63,13 +64,11 @@ def crawl():
     for r in rows[1:]:
         info = [td.text for td in r.find_elements(By.TAG_NAME,'td')]
         data.append(info)
-    
-    if len(data) ==0:
-        data = ['no data available']
-        return data
    
     global today
     for d in data:
+        if len(d) < 3:
+            continue
         textmsg = u'{}.\n{}.\n{}'.format(d[2],d[1],d[0])
         if textmsg not in today:
             send_msg(bot,textmsg)
