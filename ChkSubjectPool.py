@@ -18,6 +18,12 @@ import traceback
 import datetime
 import signal
 import json
+import subprocess
+
+VERSION = 1.1
+NOTES = '''
+        skip duplicate data within a day
+        '''
 
 interval = 2 #min
 
@@ -33,7 +39,9 @@ with open(join(cur_d,'chat_ids.json'),'r') as f:
 
 bot = telegram.Bot(token=token)
 
-def crawl(prevdata = []):
+today = set()
+
+def crawl():
     options = webdriver.ChromeOptions()
     
     options.add_argument('headless')
@@ -59,17 +67,13 @@ def crawl(prevdata = []):
     if len(data) ==0:
         data = ['no data available']
         return data
-    
-    data.sort()
-    prevdata.sort()
-    if prevdata == data:
-        print 'skip'
-        return data
    
-    
+    global today
     for d in data:
         textmsg = u'{}.\n{}.\n{}'.format(d[2],d[1],d[0])
-        send_msg(bot,textmsg)
+        if textmsg not in today:
+            send_msg(bot,textmsg)
+            today.add(textmsg)
     
     print len(data)
     
@@ -82,19 +86,21 @@ def send_msg(bot,msg):
         bot.sendMessage(chat_id=chat_id, text=msg)
     
 def main():
-    data = []
     while True:
         try:
             now = datetime.datetime.now().hour
             if now > 22 or now < 6:
+                global today
+                today = ()
                 time.sleep(3600)
                 continue
-            data = crawl(prevdata = data)
+            crawl()
         except:
             bot.sendMessage(chat_id=chat_ids[0], text=traceback.format_exc())
-            
+        subprocess.call('pkill chrome',shell=True)
         time.sleep(60 * interval)
         
         
 if __name__ == "__main__":
+    send_msg(bot,'BOT Restarted\n v{}\nNotes:{}'.format(VERSION,NOTES))
     main()
