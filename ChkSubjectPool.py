@@ -20,14 +20,14 @@ import signal
 import json
 import subprocess
 
-VERSION = '1.1.1'
+VERSION = 1.2
 NOTES = '''
-        fixed error when there is no data
+        update chat_ids everytime it crawls
         '''
 
 interval = 2 #min
 
-token = 'xxxxx'
+token='xxxxx'
 
 chrome_dir = '/usr/local/bin/chromedriver'
 
@@ -43,6 +43,10 @@ bot = telegram.Bot(token=token)
 today = set()
 
 def crawl():
+    global chat_ids
+    with open(join(cur_d,'chat_ids.json'),'r') as f:
+        chat_ids = json.load(f)
+
     options = webdriver.ChromeOptions()
     
     options.add_argument('headless')
@@ -64,11 +68,13 @@ def crawl():
     for r in rows[1:]:
         info = [td.text for td in r.find_elements(By.TAG_NAME,'td')]
         data.append(info)
+    
+    if len(data) ==0:
+        data = ['no data available']
+        return data
    
     global today
     for d in data:
-        if len(d) < 3:
-            continue
         textmsg = u'{}.\n{}.\n{}'.format(d[2],d[1],d[0])
         if textmsg not in today:
             send_msg(bot,textmsg)
@@ -80,7 +86,10 @@ def crawl():
     driver.quit()
     return data
             
-def send_msg(bot,msg):
+def send_msg(bot,msg,target=None):
+    if target:
+        bot.sendMessage(chat_id=target,text=msg)
+        return
     for chat_id in chat_ids:
         bot.sendMessage(chat_id=chat_id, text=msg)
     
@@ -90,7 +99,7 @@ def main():
             now = datetime.datetime.now().hour
             if now > 22 or now < 6:
                 global today
-                today = ()
+                today = set()
                 time.sleep(3600)
                 continue
             crawl()
@@ -101,5 +110,6 @@ def main():
         
         
 if __name__ == "__main__":
-    send_msg(bot,'BOT Restarted\n v{}\nNotes:{}'.format(VERSION,NOTES))
+    print 'BOT Restarted\n v{}\nNotes:{}'.format(VERSION,NOTES)
+    # send_msg(bot,'BOT Restarted\n v{}\nNotes:{}'.format(VERSION,NOTES))
     main()
