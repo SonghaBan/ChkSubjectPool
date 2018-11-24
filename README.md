@@ -2,6 +2,10 @@
 checks UvT Human Subject Pool website and send a Telegram notification if there is any new slot available.
 
 RELEASE
+
+v1.2 - Nov 22
+- update chat_ids everytime it crawls
+
 v1.1 - Nov 19
 - skip duplicate data within a day
 
